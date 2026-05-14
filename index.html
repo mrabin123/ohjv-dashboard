@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OHJV Dashboard — May 14, 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0b1f35;
+      --navy2:  #112b47;
+      --blue:   #2563eb;
+      --blue2:  #3b82f6;
+      --gold:   #c9922a;
+      --gold2:  #f5c06a;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --amber:  #d97706;
+      --text:   #f1f5f9;
+      --muted:  #94a3b8;
+      --border: rgba(255,255,255,0.07);
+      --card:   rgba(255,255,255,0.04);
+      --card2:  rgba(255,255,255,0.07);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, rgba(37,99,235,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(201,146,42,0.10) 0%, transparent 55%),
+        linear-gradient(180deg, #0b1f35 0%, #071625 100%);
+      pointer-events: none;
+    }
+
+    .wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    /* ── HEADER ── */
+    header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px; margin-bottom: 28px;
+    }
+    .logo-row { display: flex; align-items: center; gap: 14px; }
+    .logo-mark {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--navy2) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px;
+      color: #fff; letter-spacing: -0.5px; flex-shrink: 0;
+    }
+    h1 {
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: clamp(18px, 2.2vw, 24px); letter-spacing: -0.3px;
+      line-height: 1.2;
+    }
+    .h1-sub { font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 3px; }
+    .meta {
+      text-align: right; font-family: 'DM Mono', monospace;
+      font-size: 11px; color: var(--muted); line-height: 1.7;
+    }
+    .meta strong { color: var(--text); }
+    .live-dot {
+      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); margin-right: 5px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── KPI GRID ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px; margin-bottom: 16px;
+    }
+    .kpi {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px 20px;
+      position: relative; overflow: hidden;
+      transition: transform .2s, border-color .2s;
+    }
+    .kpi:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.14); }
+    .kpi::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .kpi-label {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .kpi-val {
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: clamp(22px, 2.5vw, 30px); letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .kpi-accent-blue  { border-top: 2px solid var(--blue2); }
+    .kpi-accent-gold  { border-top: 2px solid var(--gold); }
+    .kpi-accent-green { border-top: 2px solid var(--green); }
+    .kpi-accent-muted { border-top: 2px solid rgba(255,255,255,0.15); }
+
+    /* ── GRID LAYOUTS ── */
+    .row { display: grid; gap: 12px; margin-bottom: 12px; }
+    .row-2     { grid-template-columns: 1fr 1fr; }
+    .row-3     { grid-template-columns: 1.6fr 1fr; }
+    .row-cov   { grid-template-columns: 1.4fr 1fr; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px 22px;
+    }
+    .card-title {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+    }
+
+    /* ── PROGRESS BARS ── */
+    .prog-wrap { margin: 10px 0; }
+    .prog-label-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .prog-label { font-size: 12px; color: var(--muted); }
+    .prog-val { font-size: 12px; font-weight: 500; color: var(--text); }
+    .prog-track {
+      height: 5px; background: rgba(255,255,255,0.08);
+      border-radius: 3px; overflow: hidden;
+    }
+    .prog-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+    /* ── SPLIT STATS ── */
+    .split { display: flex; gap: 20px; margin-top: 14px; }
+    .split-item { flex: 1; }
+    .split-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .split-val { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; }
+
+    /* ── COVENANTS ── */
+    .cov-table { width: 100%; border-collapse: collapse; }
+    .cov-table th {
+      font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); font-weight: 500; padding: 0 0 10px;
+      text-align: right;
+    }
+    .cov-table th:first-child { text-align: left; }
+    .cov-table td {
+      padding: 8px 0; font-size: 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+    }
+    .cov-table tr:last-child td { border-bottom: none; }
+    .cov-table td:first-child { text-align: left; color: var(--muted); padding-right: 12px; }
+    .cov-table td:nth-child(2) { font-weight: 600; }
+    .badge {
+      display: inline-block; font-size: 10px; padding: 2px 9px;
+      border-radius: 20px; font-weight: 500;
+    }
+    .badge-green { background: rgba(22,163,74,0.15); color: #4ade80; }
+    .badge-amber { background: rgba(217,119,6,0.15);  color: #fbbf24; }
+    .badge-red   { background: rgba(220,38,38,0.15);  color: #f87171; }
+
+    /* ── WATCH ── */
+    .watch-row {
+      display: flex; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .watch-row:last-child { border-bottom: none; }
+    .watch-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      flex-shrink: 0; margin-top: 5px;
+    }
+    .watch-prop { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+    .watch-note { font-size: 11px; color: var(--muted); }
+
+    /* ── CHART ── */
+    .chart-wrap { position: relative; height: 140px; }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 32px; padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    footer p { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: repeat(2,1fr); }
+      .row-2, .row-3, .row-cov { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── FADE-IN ── */
+    .fade { opacity: 0; transform: translateY(16px); animation: fadein .5s ease forwards; }
+    @keyframes fadein { to { opacity:1; transform:none; } }
+    .fade:nth-child(1) { animation-delay: .05s }
+    .fade:nth-child(2) { animation-delay: .10s }
+    .fade:nth-child(3) { animation-delay: .15s }
+    .fade:nth-child(4) { animation-delay: .20s }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-row">
+      <div class="logo-mark">OI</div>
+      <div>
+        <h1>110 VI Open Industrial LLC</h1>
+        <div class="h1-sub">Heitman JV · Daily Portfolio Dashboard</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div><span class="live-dot"></span><strong>May 14, 2026</strong></div>
+      <div>Model date: <strong>Apr 28, 2026</strong></div>
+      <div>OIHJV_EquityTracking_20260331.xlsx</div>
+    </div>
+  </header>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi kpi-accent-blue fade">
+      <div class="kpi-label">Total GAV</div>
+      <div class="kpi-val">$179.3M</div>
+      <div class="kpi-sub">33 assets · ~131 acres</div>
+    </div>
+    <div class="kpi kpi-accent-muted fade">
+      <div class="kpi-label">Occupancy</div>
+      <div class="kpi-val">69.4%</div>
+      <div class="kpi-sub">Seed 78.2% &nbsp;/&nbsp; GF 9.9%</div>
+    </div>
+    <div class="kpi kpi-accent-muted fade">
+      <div class="kpi-label">Debt Outstanding</div>
+      <div class="kpi-val">$71.8M</div>
+      <div class="kpi-sub">WA cost 5.2%</div>
+    </div>
+    <div class="kpi kpi-accent-green fade">
+      <div class="kpi-label">Revolver Available</div>
+      <div class="kpi-val" style="color:#4ade80">$43.2M</div>
+      <div class="kpi-sub">of $50M facility</div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Capital + Distributions -->
+  <div class="row row-2">
+
+    <div class="card">
+      <div class="card-title">Capital Deployment</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;">$94.0M</span>
+        <span style="font-size:12px;color:var(--muted);">of $212.5M &nbsp;<strong style="color:var(--text)">44.2%</strong></span>
+      </div>
+      <div class="prog-track" style="margin-bottom:14px;">
+        <div class="prog-fill" style="width:44.2%;background:linear-gradient(90deg,#2563eb,#60a5fa);"></div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-label-row">
+          <span class="prog-label">Heitman LP (80%)</span>
+          <span class="prog-val" style="color:#60a5fa">$75.2M</span>
+        </div>
+        <div class="prog-track" style="margin-bottom:10px;">
+          <div class="prog-fill" style="width:44.2%;background:#2563eb;"></div>
+        </div>
+        <div class="prog-label-row">
+          <span class="prog-label">Open Industrial GP (20%)</span>
+          <span class="prog-val" style="color:var(--gold2)">$18.8M</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill" style="width:44.2%;background:var(--gold);"></div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between;">
+        <span style="font-size:11px;color:var(--muted);">Unfunded remaining</span>
+        <span style="font-size:12px;font-weight:500;">$118.5M</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Distributions ITD</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;">$904,201</span>
+        <span style="font-size:12px;color:var(--muted);">yield <strong style="color:var(--text)">[8]</strong></span>
+      </div>
+      <div class="chart-wrap" style="margin:12px 0 10px;">
+        <canvas id="distChart"></canvas>
+      </div>
+      <div class="split">
+        <div class="split-item">
+          <div class="split-label">Heitman LP</div>
+          <div class="split-val" style="color:#60a5fa">$723,360</div>
+        </div>
+        <div class="split-item">
+          <div class="split-label">Open Industrial</div>
+          <div class="split-val" style="color:var(--gold2)">$180,840</div>
+        </div>
+        <div class="split-item">
+          <div class="split-label">ITD NOI</div>
+          <div class="split-val">$1.7M</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: Covenants + Watch -->
+  <div class="row row-cov">
+
+    <div class="card">
+      <div class="card-title">KeyBank Covenant Compliance · Mar 2026 Certificate</div>
+      <table class="cov-table">
+        <thead>
+          <tr>
+            <th style="text-align:left">Covenant</th>
+            <th>Actual</th>
+            <th>Threshold</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>§9.2 Leverage (debt / GAV)</td>
+            <td>56.9%</td>
+            <td style="color:var(--muted)">≤ 65%</td>
+            <td><span class="badge badge-green">Compliant</span></td>
+          </tr>
+          <tr>
+            <td>§9.3 Minimum cash liquidity</td>
+            <td>$20.0M</td>
+            <td style="color:var(--muted)">≥ $5M</td>
+            <td><span class="badge badge-green">Compliant</span></td>
+          </tr>
+          <tr>
+            <td>§7.22 Min. BB properties</td>
+            <td>23</td>
+            <td style="color:var(--muted)">≥ 20</td>
+            <td><span class="badge badge-green">Compliant</span></td>
+          </tr>
+          <tr>
+            <td>§7.22 Min. BB value</td>
+            <td>$113.7M</td>
+            <td style="color:var(--muted)">≥ $70M</td>
+            <td><span class="badge badge-green">Compliant</span></td>
+          </tr>
+          <tr>
+            <td>Net BB availability</td>
+            <td style="color:#f87171">$-3.6M</td>
+            <td style="color:var(--muted)">—</td>
+            <td><span class="badge badge-amber">Monitor</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);
+                  font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">
+        Lender-adj. NOI: $7.5M &nbsp;·&nbsp; Maturity: 12/19/2028 (ext. to 12/19/2030)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Watch Items</div>
+      
+        <div class="watch-row">
+          <span class="watch-dot" style="background:#e63946"></span>
+          <div>
+            <div class="watch-prop">Wellington (Manassas, VA)</div>
+            <div class="watch-note">William Scotsman lease exp. 9/30/26 → 100% vacancy Oct-26</div>
+          </div>
+        </div>
+        <div class="watch-row">
+          <span class="watch-dot" style="background:#f4a261"></span>
+          <div>
+            <div class="watch-prop">Minnick (Laurel, MD)</div>
+            <div class="watch-note">Dovis Best Wholesale >90-day AR ($117K) · occupancy drops Oct-26</div>
+          </div>
+        </div>
+        <div class="watch-row">
+          <span class="watch-dot" style="background:#f4a261"></span>
+          <div>
+            <div class="watch-prop">Loisdale (Springfield, VA)</div>
+            <div class="watch-note">MTM tenants · AR $111K · Carter Machinery free rent Apr-26</div>
+          </div>
+        </div>
+        <div class="watch-row">
+          <span class="watch-dot" style="background:#f4a261"></span>
+          <div>
+            <div class="watch-prop">Le Way (Fredericksburg, VA)</div>
+            <div class="watch-note">98.5% vacant by SF · CapEx draw in progress</div>
+          </div>
+        </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>110 VI Open Industrial LLC — Confidential · Internal use only</p>
+    <p>Source: OIHJV_EquityTracking_20260331.xlsx · Last saved: 2026-04-29 · Auto-generated 2026-05-14</p>
+  </footer>
+
+</div>
+
+<script>
+  new Chart(document.getElementById('distChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Jan 2026', 'Feb 2026', 'Mar 2026'],
+      datasets: [
+        { label: 'Operating', data: [148680, 231440, 0],
+           backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 4, stack: 'a' },
+        { label: 'SD Proration', data: [0, 524081, 0],
+           backgroundColor: 'rgba(59,130,246,0.25)', borderRadius: 4, stack: 'a' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': $' + c.raw.toLocaleString() } } },
+      scales: {
+        x: { stacked: true, grid: { display: false },
+              ticks: { color: '#64748b', font: { size: 10 } } },
+        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { color: '#64748b', font: { size: 10 },
+                        callback: v => '$' + (v/1000).toFixed(0) + 'k' } }
+      }
+    }
+  });
+</script>
+</body>
+</html>
